@@ -17,7 +17,7 @@ services:
     expose:
       - '8080'
     volumes:
-      - './config.json:/app/config.json'
+      - './config.json:/app/data/config.json'
     depends_on:
       postgres:
         condition: service_healthy
