@@ -1,0 +1,36 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "config_store": {
+    "enabled": true,
+    "type": "postgres",
+    "config": {
+      "host": "env.POSTGRES_HOST",
+      "port": "env.POSTGRES_PORT",
+      "user": "env.POSTGRES_USER",
+      "password": "env.POSTGRES_PASSWORD",
+      "db_name": "bifrost_config",
+      "ssl_mode": "disable"
+    }
+  },
+  "logs_store": {
+    "enabled": true,
+    "type": "postgres",
+    "config": {
+      "host": "env.POSTGRES_HOST",
+      "port": "env.POSTGRES_PORT",
+      "user": "env.POSTGRES_USER",
+      "password": "env.POSTGRES_PASSWORD",
+      "db_name": "bifrost_logs",
+      "ssl_mode": "disable",
+      "matview_refresh_interval": "5m"
+    }
+  },
+  "vector_store": {
+    "enabled": true,
+    "type": "weaviate",
+    "config": {
+      "scheme": "http",
+      "host": "weaviate:8090"
+    }
+  }
+}

@@ -1,0 +1,94 @@
+services:
+  bifrost:
+    image: ghcr.io/selfagency/bifrost
+    build: ./
+    restart: unless-stopped
+    environment:
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8080
+      - SERVICE_FQDN_BIFROST
+      - LOG_LEVEL=info
+      - LOG_STYLE=json
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=bifrost
+      - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-me}'
+      - 'SERVICE_PASSWORD_APIKEYS=${SERVICE_PASSWORD_APIKEYS:-change-me}'
+    expose:
+      - '8080'
+    volumes:
+      - './config.json:/app/config.json'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      weaviate:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget -S -O- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1'
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+  postgres:
+    image: 'postgres:16-alpine'
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bifrost
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-change-me}'
+      POSTGRES_DB: bifrost_config
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8'
+    volumes:
+      - 'postgres-data:/var/lib/postgresql/data'
+      - './postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U bifrost -d bifrost_config'
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+  weaviate:
+    image: 'cr.weaviate.io/semitechnologies/weaviate:1.26.4'
+    restart: unless-stopped
+    command:
+      - '--host'
+      - 0.0.0.0
+      - '--port'
+      - '8090'
+      - '--scheme'
+      - http
+    expose:
+      - '8090'
+    volumes:
+      - 'weaviate-data:/var/lib/weaviate'
+    environment:
+      DISABLE_TELEMETRY: '${DISABLE_TELEMETRY:-true}'
+      QUERY_DEFAULTS_LIMIT: '${QUERY_DEFAULTS_LIMIT:-1000}'
+      LOG_LEVEL: '${LOG_LEVEL:-info}'
+      GOMEMLIMIT: '${GOMEMLIMIT:-1024MiB}'
+      GOMAXPROCS: '${GOMAXPROCS:-2}'
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: '${AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED:-false}'
+      AUTHORIZATION_ADMINLIST_USERS: '${AUTHORIZATION_ADMINLIST_USERS:-admin@example.com}'
+      AUTHENTICATION_APIKEY_USERS: '${AUTHENTICATION_APIKEY_USERS:-admin@example.com}'
+      AUTHENTICATION_APIKEY_ENABLED: '${AUTHENTICATION_APIKEY_ENABLED:-true}'
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: '${SERVICE_PASSWORD_APIKEYS:-change-me}'
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: '${DEFAULT_VECTORIZER_MODULE:-none}'
+      ENABLE_MODULES: '${ENABLE_MODULES:-text2vec-openai,generative-openai,qna-openai}'
+      CLUSTER_HOSTNAME: '${CLUSTER_HOSTNAME:-node1}'
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - '-q'
+        - '--spider'
+        - 'http://localhost:8090/v1/.well-known/ready'
+      interval: 5s
+      timeout: 30s
+      retries: 10
+volumes:
+  postgres-data: null
+  weaviate-data: null
