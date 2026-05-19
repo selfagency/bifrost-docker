@@ -12,12 +12,11 @@ RUN tar -C /usr/local -xzf go.tgz
 WORKDIR /usr/local/go/src/ 
 RUN ./make.bash 
 ENV GOPATH=/opt/go/ 
-ENV PATH="/usr/local/bin:/usr/local/go/bin:/opt/venv/bin:$GOPATH/bin:$PATH"
+ENV PATH="/usr/local/bin:/usr/local/go/bin:/usr/local/lib/node_modules/.bin:/opt/venv/bin:$GOPATH/bin:$PATH"
 
 WORKDIR /app
 RUN go version
-RUN npm -g install typescript pyright yaml-language-server typescript-language-server bash-language-server @tailwindcss/language-server svelte-language-server @stylelint/language-server vscode-json-languageserver 
-RUN go install github.com/docker/docker-language-server/cmd/docker-language-server@latest
+RUN npm -g install typescript pyright yaml-language-server typescript-language-server bash-language-server @tailwindcss/language-server svelte-language-server dockerfile-language-server-nodejs vscode-json-languageserver
 RUN go install golang.org/x/tools/gopls@latest
 RUN curl -fsSL https://raw.githubusercontent.com/blackwell-systems/agent-lsp/main/install.sh | sh
 RUN agent-lsp doctor
